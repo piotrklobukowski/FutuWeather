@@ -10,6 +10,15 @@ import UIKit
 
 class LoadingView: UIView {
     
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupStack()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     let text: UILabel = {
         let txt = UILabel()
         txt.translatesAutoresizingMaskIntoConstraints = false
@@ -17,30 +26,27 @@ class LoadingView: UIView {
         txt.font = UIFont.systemFont(ofSize: 21, weight: .semibold)
         txt.textColor = UIColor.white
         txt.textAlignment = .center
-        
         return txt
     }()
-    
-    override func layoutSubviews() {
-        
+ 
+    private func setupStack() {
         self.addSubview(stack)
+        stack.addArrangedSubviews(views: [text, dots])
         
         stack.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
         stack.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
-        
-        stack.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: (0.25 * self.frame.width)).isActive = true
+        stack.centerXAnchor.constraint(equalTo: centerXAnchor, constant: -30).isActive = true
     }
     
     let dots = AnimatedDots()
     
     lazy var stack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [text, dots])
+        let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.distribution = .equalSpacing
         stack.alignment = .center
         stack.axis = .horizontal
         stack.spacing = 15
-        
         return stack
     }()
 }

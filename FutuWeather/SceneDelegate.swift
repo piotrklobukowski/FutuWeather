@@ -18,20 +18,17 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(frame: windowScene.coordinateSpace.bounds)
         window?.windowScene = windowScene
         
-        
         let viewController = MainViewController()
         let navigationController = UINavigationController(rootViewController: viewController)
         
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
         
-
-        
         let navBarApp = UINavigationBarAppearance()
         navBarApp.titleTextAttributes = [.foregroundColor: UIColor.white]
         navBarApp.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
         navBarApp.configureWithTransparentBackground()
-        navBarApp.backgroundColor = K.barColor
+        navBarApp.backgroundColor = Constants.barColor
 
         navigationController.navigationBar.scrollEdgeAppearance = navBarApp
         navigationController.navigationBar.standardAppearance = navBarApp

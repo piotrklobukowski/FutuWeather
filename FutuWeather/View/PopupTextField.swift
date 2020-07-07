@@ -12,17 +12,25 @@ class PopupTextField: UITextField {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        self.backgroundColor = UIColor.clear
-        self.layer.borderColor = UIColor.white.cgColor
-        self.layer.cornerRadius = 10
-        self.layer.borderWidth = 2
-        self.textColor = UIColor.white
-        self.adjustsFontSizeToFitWidth = true
-        self.minimumFontSize = 15
-        self.tintColor = UIColor.white
-        self.attributedPlaceholder = NSAttributedString(string: "placeholder text",
-        attributes: [NSAttributedString.Key.foregroundColor: UIColor.white,
-                     NSAttributedString.Key.font : UIFont.systemFont(ofSize: self.font!.pointSize, weight: .regular)])
+        backgroundColor = UIColor.clear
+        layer.borderColor = Customization.mainColor.cgColor
+        layer.cornerRadius = Customization.cornerRadius
+        layer.borderWidth = Customization.borderWidth
+        textColor = Customization.mainColor
+        adjustsFontSizeToFitWidth = true
+        minimumFontSize = Customization.minFontSize
+        tintColor = Customization.mainColor
+        let f = font?.pointSize ?? 20
+        attributedPlaceholder = NSAttributedString(string: "placeholder text",
+                                                   attributes: [NSAttributedString.Key.foregroundColor: Customization.mainColor,
+                     NSAttributedString.Key.font : UIFont.systemFont(ofSize: f, weight: .regular)])
+    }
+    
+    private enum Customization {
+        static let cornerRadius: CGFloat = 10
+        static let borderWidth: CGFloat = 2
+        static let mainColor: UIColor = .white
+        static let minFontSize: CGFloat = 15
     }
     
     required init?(coder aDecoder: NSCoder) {

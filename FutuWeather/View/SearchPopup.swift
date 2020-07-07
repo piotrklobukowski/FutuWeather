@@ -9,7 +9,9 @@
 import UIKit
 import CoreLocation
 
-protocol OutAnimation {
+protocol SearchPopupFunctionality {
+    func locate()
+    func search(forPlace place: String)
     func exitPopup(withData: Bool)
 }
 
@@ -17,93 +19,127 @@ class SearchPopup: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        self.frame = UIScreen.main.bounds
-        addSubview(backgroundBlur)
-        
-        NSLayoutConstraint.activate([backgroundBlur.topAnchor.constraint(equalTo: topAnchor), backgroundBlur.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                     backgroundBlur.leadingAnchor.constraint(equalTo: leadingAnchor),
-                                     backgroundBlur.trailingAnchor.constraint(equalTo: trailingAnchor)])
-        
-        container.backgroundColor = GradientColorMaker.colorWithGradient(frame: bounds, colors: K.mainColorGradient, direction: GradientColorMaker.GradientDirection.Down)
-        
-        self.addSubview(container)
-        
-        NSLayoutConstraint.activate([container.centerXAnchor.constraint(equalTo: self.centerXAnchor),
-                                     container.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-                                     container.heightAnchor.constraint(equalToConstant: 500),
-                                     container.widthAnchor.constraint(equalToConstant: 300)])
-        
-        container.addSubview(stack)
-        
-        NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-                                     stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-                                     stack.heightAnchor.constraint(equalTo: container.heightAnchor, multiplier: 0.9),
-                                     stack.widthAnchor.constraint(equalTo: container.widthAnchor, multiplier: 0.9),
-                                     searchTextField.heightAnchor.constraint(equalToConstant: 40),
-                                     loadingView.heightAnchor.constraint(equalTo: container.heightAnchor, multiplier: 0.1)])
-        
-        stack.subviews.forEach({
-            $0.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        })
-        [cancelButton, searchButton, locationButton].forEach({
-            $0.heightAnchor.constraint(equalTo: container.heightAnchor, multiplier: 0.11).isActive = true
-        })
-        
-        loadingView.isHidden = true
-        alertView.isHidden = true
-        
-        searchTextField.delegate = self
-        locationManager.errorDelegate = self
-        weatherManager.handlerDelegate = self
-        setupDismissingTapForKeyboard()
-        
+        setupBackgroundBlur()
+        setupContainer()
+        setupStack()
+        setupStackElements()
+        setupDelegates()
+        setupDismissingTap()
         showAnimation()
     }
     
     required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Setup Section
+    
+    private func setupBackgroundBlur() {
+        addSubview(backgroundBlur)
+        NSLayoutConstraint.activate([backgroundBlur.topAnchor.constraint(equalTo: topAnchor),
+                                     backgroundBlur.bottomAnchor.constraint(equalTo: bottomAnchor),
+                                     backgroundBlur.leadingAnchor.constraint(equalTo: leadingAnchor),
+                                     backgroundBlur.trailingAnchor.constraint(equalTo: trailingAnchor)])
+    }
+    
+    private func setupContainer() {
+        addSubview(container)
+        NSLayoutConstraint.activate([container.centerXAnchor.constraint(equalTo: centerXAnchor),
+                                     container.centerYAnchor.constraint(equalTo: centerYAnchor),
+                                     container.heightAnchor.constraint(equalToConstant: Customization.containerHeight),
+                                     container.widthAnchor.constraint(equalToConstant: Customization.containerWidth)])
+        container.backgroundColor = GradientColorMaker.colorWithGradient(frame: bounds, colors: Constants.mainColorGradient, direction: GradientColorMaker.GradientDirection.Down)
+    }
+    
+    private func setupStack() {
+        container.addSubview(stack)
+        NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+                                     stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+                                     stack.heightAnchor.constraint(equalToConstant: Customization.stackHeight),
+                                     stack.widthAnchor.constraint(equalToConstant: Customization.stackWidth)])
+    }
+    
+    private func setupStackElements() {
+        stack.addArrangedSubviews(views: [title, subtitle, searchTextField, loadingView, alertView, searchButton, locationButton, cancelButton])
+        NSLayoutConstraint.activate([searchTextField.heightAnchor.constraint(equalToConstant: Customization.searchTextFieldHeight),
+                                     loadingView.heightAnchor.constraint(equalToConstant: Customization.loadingViewHeight)])
+        
+        stack.subviews.forEach({
+            $0.widthAnchor.constraint(equalToConstant: Customization.stackWidth).isActive = true
+        })
+        [cancelButton, searchButton, locationButton].forEach({
+            $0.heightAnchor.constraint(equalToConstant: Customization.buttonsHeight).isActive = true
+        })
+        
+        loadingView.isHidden = true
+        alertView.isHidden = true
+    }
+    
+    private func setupDelegates() {
+        searchTextField.delegate = self
     }
     
     // MARK: - Properties Section
     
-    var delegate: OutAnimation?
+    var delegate: SearchPopupFunctionality?
     
-    let weatherManager = WeatherManager()
-    let locationManager = LocationManager()
+    private enum Customization {
+        static let containerHeight: CGFloat = 500
+        static let containerWidth: CGFloat = 300
+        static let containerCornerRadius: CGFloat = 40
+        static let searchTextFieldHeight: CGFloat = 40
+        static let stackHeight: CGFloat = containerHeight * 0.9
+        static let stackWidth: CGFloat = containerWidth * 0.9
+        static let buttonsHeight: CGFloat = containerHeight * 0.11
+        static let loadingViewHeight: CGFloat = containerHeight * 0.1
+        static let shadowRadius: CGFloat = CGFloat(8)
+        static let shadowOpacity: Float = Float(0.3)
+        static let shadowOffset = CGSize(width: 0, height: 5)
+    }
     
-    let backgroundBlur: UIVisualEffectView = {
+    private enum SubviewsFactor {
+        static func button(withTitle title: String, andAction action: Selector) -> PopupButton {
+            let btn = PopupButton()
+            let btnFrame = CGRect(x: 0, y: 0, width: Customization.stackWidth, height: Customization.buttonsHeight)
+            btn.translatesAutoresizingMaskIntoConstraints = false
+            btn.layer.cornerRadius = Customization.buttonsHeight / 2
+            btn.setTitle(title, for: .normal)
+            btn.addTarget(self, action: action, for: [.touchUpInside])
+            btn.backgroundColor = GradientColorMaker.colorWithGradient(frame: btnFrame, colors: Constants.mainColorGradient, direction: GradientColorMaker.GradientDirection.Down)
+            return btn
+        }
+    }
+    
+    private let backgroundBlur: UIVisualEffectView = {
         let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
         let vev = UIVisualEffectView(effect: blurEffect)
         vev.translatesAutoresizingMaskIntoConstraints = false
-        
         return vev
     }()
-    
-    let title: UILabel = {
+        
+    private let title: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: 21, weight: .semibold)
         label.textColor = UIColor.white
         label.textAlignment = .center
         label.text = "Search for location"
-        
         return label
     }()
     
-    let subtitle: UILabel = {
+    private let subtitle: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.systemFont(ofSize: 19, weight: .regular)
         label.textColor = UIColor.white
-        label.textAlignment = .center
+        label.textAlignment = .justified
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
         label.text = "We can use localisation to find your location, or you can specify it by typing below city name, its zip code and name of country:"
-        
         return label
     }()
     
-    lazy var searchTextField: PopupTextField = {
+    let searchTextField: PopupTextField = {
         let txtFld = PopupTextField()
         txtFld.translatesAutoresizingMaskIntoConstraints = false
         txtFld.placeholder = "\u{1F50E} Search"
@@ -111,105 +147,74 @@ class SearchPopup: UIView {
         txtFld.enablesReturnKeyAutomatically = true
         txtFld.autocapitalizationType = .words
         txtFld.autocorrectionType = .no
-        
         return txtFld
     }()
     
-    lazy var searchButton: PopupButton = {
-        let btn = PopupButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setTitle("Search", for: .normal)
-        btn.addTarget(self, action: #selector(search), for: [.touchUpInside])
-        
-        return btn
-    }()
+    private let searchButton = SubviewsFactor.button(withTitle: "Search", andAction: #selector(searchPressed))
+    private let locationButton = SubviewsFactor.button(withTitle: "Use my location", andAction: #selector(locatePressed))
+    private let cancelButton = SubviewsFactor.button(withTitle: "Cancel", andAction: #selector(hideAnimation))
     
-    let locationButton: PopupButton = {
-        let btn = PopupButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setTitle("Use my location", for: .normal)
-        btn.addTarget(self, action: #selector(locate), for: [.touchUpInside])
-        
-        return btn
-    }()
-    
-    let cancelButton: PopupButton = {
-        let btn = PopupButton(type: .system)
-        btn.translatesAutoresizingMaskIntoConstraints = false
-        btn.setTitle("Cancel", for: .normal)
-        btn.addTarget(self, action: #selector(hideAnimation), for: [.touchUpInside])
-        
-        return btn
-    }()
-    
-    let alertView: AlertView = {
+    private let alertView: AlertView = {
         let view = AlertView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        
         return view
     }()
     
-    let loadingView: LoadingView = {
+    private let loadingView: LoadingView = {
         let view = LoadingView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        
         return view
     }()
     
-    lazy var container: UIView = {
+    private let container: UIView = {
         let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 45
+        view.layer.cornerRadius = Customization.containerCornerRadius
         view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 10, height: 10)
-        view.layer.shadowRadius = 8
-        view.layer.shadowOpacity = 0.2
-        
+        view.layer.shadowOffset = Customization.shadowOffset
+        view.layer.shadowRadius = Customization.shadowRadius
+        view.layer.shadowOpacity = Customization.shadowOpacity
         return view
     }()
     
-    lazy var stack: UIStackView = {
-        let stack = UIStackView(arrangedSubviews: [title, subtitle, searchTextField, loadingView, alertView, searchButton, locationButton, cancelButton])
+    private let stack: UIStackView = {
+        let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.distribution = .equalSpacing
         stack.alignment = .center
         stack.axis = .vertical
-        
         return stack
     }()
     
     // MARK: - Functionality Section
     
-    @objc func search() {
+    @objc private func searchPressed() {
         guard let text = searchTextField.text else { searchTextField.resignFirstResponder(); return }
         showLoadingAnimation()
         
-        getData(forPlace: text)
+        delegate?.search(forPlace: text)
         searchTextField.resignFirstResponder()
     }
     
-    @objc func locate() {
+    @objc private func locatePressed() {
         if searchTextField.isFirstResponder {
             searchTextField.resignFirstResponder()
         }
-        
-        locationManager.delegate = self
-        locationManager.errorDelegate = self
         showLoadingAnimation()
-        
-        locationManager.provideLocation()
+        delegate?.locate()
     }
     
-    private func setupDismissingTapForKeyboard() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(UIView.endEditing(_:)))
+    private func setupDismissingTap() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboardOrPopup))
         self.addGestureRecognizer(tap)
     }
     
-    private func getData(forPlace place: String) {
-        let placeFinder = PlaceFinder()
-        placeFinder.delegate = weatherManager
-        placeFinder.errorDelegate = self
-        placeFinder.findPlace(of: place)
+    @objc private func dismissKeyboardOrPopup() {
+        if searchTextField.isFirstResponder {
+            self.endEditing(true)
+        } else {
+            hideAnimation()
+        }
     }
     
     // MARK: - Animations Section
@@ -226,7 +231,7 @@ class SearchPopup: UIView {
         }
     }
     
-    private func showAnimation() {
+    func showAnimation() {
         container.transform = CGAffineTransform(translationX: 0, y: -(0.5 * self.bounds.height))
         container.alpha = 0
         self.alpha = 0
@@ -239,33 +244,33 @@ class SearchPopup: UIView {
 
     private func hideAlertViewAnimation() {
         guard alertView.isHidden == false else { return }
-        UIView.animate(withDuration: 0.2, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 3, options: .curveLinear, animations: {
+        UIView.animate(withDuration: 0.2, animations: {
             self.alertView.alpha = 0
             self.searchTextField.layer.borderColor = UIColor.white.cgColor
             self.searchTextField.textColor = UIColor.white
-            
         }, completion: {
             (complete) in
             if complete {
-                UIView.animate(withDuration: 0.2, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 3, options: .curveLinear, animations: {
+                UIView.animate(withDuration: 0.2) {
                     self.alertView.isHidden = true
-                })
+                }
             }
         })
     }
     
-    private func showAlertViewAnimation(message: String, markTextField: Bool) {
+    func showAlertViewAnimation(message: String, markTextField: Bool) {
         guard alertView.isHidden else { return }
+        hideLoadingAnimation()
         alertView.message.text = message
         alertView.alpha = 0.0
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 3, options: .curveLinear, animations: {
+        UIView.animate(withDuration: 0.5) {
             self.alertView.isHidden = false
             self.alertView.alpha = 1.0
             if markTextField {
-                self.searchTextField.layer.borderColor = UIColor(red: 0.89, green: 0.07, blue: 0.07, alpha: 1.00).cgColor
-                self.searchTextField.textColor = UIColor(red: 0.89, green: 0.07, blue: 0.07, alpha: 1.00)
+                self.searchTextField.layer.borderColor = Constants.errorColor.cgColor
+                self.searchTextField.textColor = Constants.errorColor
             }
-        }, completion: nil)
+        }
     }
     
     private func showLoadingAnimation() {
@@ -276,21 +281,20 @@ class SearchPopup: UIView {
             searchTextField.layer.borderColor = UIColor.white.cgColor
             searchTextField.textColor = UIColor.white
         }
-        
         loadingView.alpha = 0.0
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 3, options: .curveLinear, animations: {
+        UIView.animate(withDuration: 0.2) {
             self.loadingView.isHidden = false
             self.loadingView.alpha = 1.0
-        }, completion: nil)
+        }
         loadingView.dots.loadingAnimation()
     }
     
-    private func hideLoadingAnimation() {
+    func hideLoadingAnimation() {
         guard loadingView.isHidden == false else { return }
-        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 3, options: .curveLinear, animations: {
+        UIView.animate(withDuration: 0.2) {
             self.loadingView.alpha = 0
             self.loadingView.isHidden = true
-        }, completion: nil)
+        }
     }
 }
 
@@ -303,7 +307,7 @@ extension SearchPopup: UITextFieldDelegate {
             return true }
         showLoadingAnimation()
         print(text)
-        getData(forPlace: text)
+        delegate?.search(forPlace: text)
         searchTextField.resignFirstResponder()
         return true
     }
@@ -311,65 +315,4 @@ extension SearchPopup: UITextFieldDelegate {
     func textFieldDidBeginEditing(_ textField: UITextField) {
         hideAlertViewAnimation()
     }
-    
-}
-
-extension SearchPopup: LocationFromLocationManager {
-    
-    func getData(usingLocation location: CLLocation) {
-        let lon = String(location.coordinate.longitude)
-        let lat = String(location.coordinate.latitude)
-        
-        weatherManager.fetchWeather(forLongitude: lon, andLatitude: lat)
-    }
-}
-
-extension SearchPopup: WeatherManagerPopupEventHandler {
-    
-    func hidePopup() {
-        hideAnimation(withData: true)
-    }
-    
-    func showWeatherManagerError(error: Error) {
-        print("ERROR FROM WEATHER MANAGER: \(error)")
-        
-        hideLoadingAnimation()
-        showAlertViewAnimation(message: "We can't provide weather forecast for this place", markTextField: true)
-    }
-}
-
-extension SearchPopup: ErrorFromPlaceFinder {
-    
-    func showPlaceFinderError(er: CLError) {
-        print("ERROR FROM PLACE FINDER: \(er.localizedDescription)")
-        hideLoadingAnimation()
-        
-        switch er.code {
-        case .geocodeFoundNoResult:
-            showAlertViewAnimation(message: "We can't find this city", markTextField: true)
-        default:
-            showAlertViewAnimation(message: "There is problem with internet connection", markTextField: false)
-        }
-    }
-}
-
-extension SearchPopup: ErrorFromLocationManager {
-    
-    func showLocationManagerError(error: CLError) {
-        print("ERROR FROM LOCATION MANAGER: \(error)")
-        hideLoadingAnimation()
-        var message: String
-        
-        switch error.code {
-        case .denied:
-            message = "You must first allow to use localisation services"
-        case .network:
-            message = "There is problem with internet connection"
-        default:
-            message = "There is problem with localisation services"
-        }
-        
-        showAlertViewAnimation(message: message, markTextField: false)
-    }
-    
 }

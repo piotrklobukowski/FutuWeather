@@ -19,11 +19,7 @@ protocol ErrorFromLocationManager {
 }
 
 class LocationManager: NSObject {
-    
-    override init() {
-        super.init()
-    }
-    
+        
     var delegate: LocationFromLocationManager?
     var errorDelegate: ErrorFromLocationManager?
 

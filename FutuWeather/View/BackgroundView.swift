@@ -11,30 +11,22 @@ import UIKit
 class BackgroundView: UIView {
     
     init(frame: CGRect, imageName: String, color: UIColor) {
-        backgroundImage = UIImage(named: imageName)!
         backgroundImageView = UIImageView(frame: frame)
+        backgroundImageView.image = UIImage(named: imageName)
         backgroundColorView = UIView(frame: frame)
-        self.color = color
+        backgroundColorView.backgroundColor = color
         super.init(frame: frame)
         setUpBackground()
     }
     
     required init?(coder: NSCoder) {
-        backgroundImage = UIImage()
-        backgroundImageView = UIImageView()
-        backgroundColorView = UIView()
-        self.color = UIColor()
-        super.init(coder: coder)
+        fatalError("init(coder:) has not been implemented")
     }
     
-    private var backgroundImage: UIImage
-    private var color: UIColor
     private var backgroundImageView: UIImageView
     private var backgroundColorView: UIView
     
     private func setUpBackground() {
-        backgroundImageView.image = backgroundImage
-        backgroundColorView.backgroundColor = color
         addSubview(backgroundImageView)
         addSubview(backgroundColorView)
     }

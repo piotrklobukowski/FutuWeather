@@ -12,26 +12,30 @@ class PopupButton: UIButton {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        setupButtonView()
         setupAnimatingPressActions()
     }
     
     required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        setupAnimatingPressActions()
+        fatalError("init(coder:) has not been implemented")
     }
     
-    override func layoutSublayers(of layer: CALayer) {
-        super.layoutSublayers(of: layer)
-        layer.cornerRadius = bounds.height / 2
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOffset = CGSize(width: 0, height: 5)
-        layer.shadowRadius = 8
-        layer.shadowOpacity = 0.30
-        
-        tintColor = UIColor.white
-        titleLabel?.font = UIFont.systemFont(ofSize: 21, weight: .regular)
-        
-        backgroundColor = GradientColorMaker.colorWithGradient(frame: bounds, colors: K.mainColorGradient, direction: GradientColorMaker.GradientDirection.Down)
+    private enum Customization {
+        static let shadowRadius: CGFloat = 8
+        static let shadowOpacity: Float = 0.3
+        static let shadowOffset = CGSize(width: 0, height: 5)
+        static let fontSize: CGFloat = 21
+        static let shadowColor: UIColor = .black
+        static let tintColor: UIColor = .white
+    }
+    
+    private func setupButtonView() {
+        layer.shadowColor = Customization.shadowColor.cgColor
+        layer.shadowOffset = Customization.shadowOffset
+        layer.shadowRadius = Customization.shadowRadius
+        layer.shadowOpacity = Customization.shadowOpacity
+        tintColor = Customization.tintColor
+        titleLabel?.font = UIFont.systemFont(ofSize: Customization.fontSize, weight: .regular)
     }
     
     private func setupAnimatingPressActions() {

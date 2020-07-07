@@ -10,18 +10,30 @@ import UIKit
 
 class AlertView: UIView {
     
-    override func layoutSubviews() {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
         layer.cornerRadius = 19
-        backgroundColor = GradientColorMaker.colorWithGradient(frame: bounds, colors: K.errorColorGradient, direction: GradientColorMaker.GradientDirection.Down)
-        self.addSubview(message)
-        
-        message.leadingAnchor.constraint(equalTo: leadingAnchor, constant: (0.03 * bounds.width)).isActive = true
-        message.trailingAnchor.constraint(equalTo: trailingAnchor, constant: (-0.03 * bounds.width)).isActive = true
-        message.centerXAnchor.constraint(equalTo: centerXAnchor).isActive = true
-        message.centerYAnchor.constraint(equalTo: centerYAnchor).isActive = true
-        heightAnchor.constraint(equalTo: message.heightAnchor, multiplier: 1.5).isActive = true
+        prepareView()
     }
     
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        backgroundColor = GradientColorMaker.colorWithGradient(frame: bounds, colors: Constants.errorColorGradient, direction: GradientColorMaker.GradientDirection.Down)
+    }
+    
+    func prepareView() {
+        addSubview(message)
+        NSLayoutConstraint.activate([message.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 10),
+                                     message.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+                                     message.centerXAnchor.constraint(equalTo: centerXAnchor),
+                                     message.centerYAnchor.constraint(equalTo: centerYAnchor),
+                                     heightAnchor.constraint(equalTo: message.heightAnchor, multiplier: 1.5)])
+    }
+        
     var message: UILabel = {
         let lb = UILabel()
         lb.translatesAutoresizingMaskIntoConstraints = false

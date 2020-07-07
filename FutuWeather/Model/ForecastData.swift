@@ -9,18 +9,18 @@
 import Foundation
 
 struct EightDayForecastData: Codable {
-    let timezone_offset: Int
+    let timezoneOffset: Int
     let daily: [Daily]
 }
 
 struct Daily: Codable {
     let dt: Int
     let temp: Temp
-    let feels_like: FeelsLike
+    let feelsLike: FeelsLike
     let pressure: Int
     let humidity: Int
-    let wind_speed: Double
-    let wind_deg: Int
+    let windSpeed: Double
+    let windDeg: Int
     let weather: [Weather]
     let clouds: Int
     let rain: Double?
@@ -60,12 +60,11 @@ struct List: Codable {
     let wind: Wind
     let rain: Rain?
     let snow: Rain?
-    let dt_txt: String
 }
 
 struct Main: Codable {
     let temp: Double
-    let feels_like: Double
+    let feelsLike: Double
     let pressure: Int
     let humidity: Int
 }

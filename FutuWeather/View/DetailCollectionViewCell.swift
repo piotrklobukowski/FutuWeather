@@ -12,22 +12,29 @@ class DetailCollectionViewCell: UICollectionViewCell {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        addSubview(stack)
-        
-        NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: topAnchor),
-                                     stack.bottomAnchor.constraint(equalTo: bottomAnchor),
-                                     stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-                                     stack.trailingAnchor.constraint(equalTo: trailingAnchor)])
-        
-        NSLayoutConstraint.activate([icon.widthAnchor.constraint(equalTo: icon.heightAnchor)])
+        setupStack()
+        setupIcon()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
     }
     
-    lazy var stack: UIStackView = {
-       let stack = UIStackView(arrangedSubviews: [icon, descriptionLbl, hourLbl])
+    private func setupStack() {
+        stack.addArrangedSubviews(views: [icon, descriptionLbl, hourLbl])
+        contentView.addSubview(stack)
+        NSLayoutConstraint.activate([stack.topAnchor.constraint(equalTo: topAnchor),
+                                     stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+                                     stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+                                     stack.trailingAnchor.constraint(equalTo: trailingAnchor)])
+    }
+    
+    private func setupIcon() {
+        NSLayoutConstraint.activate([icon.widthAnchor.constraint(equalTo: icon.heightAnchor)])
+    }
+    
+    private let stack: UIStackView = {
+       let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.distribution = .fillEqually
         stack.axis = .vertical

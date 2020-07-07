@@ -9,9 +9,9 @@
 import Foundation
 import CoreLocation
 
-protocol UpdateViewWithData {
-    func updateView(withGeneralData data: EightDayForecastData)
-    func updateView(withDetailData data: ThreeHoursForecastData)
+protocol UpdateControllerWithData {
+    func updateController(withGeneralData data: EightDayForecastData)
+    func updateController(withDetailData data: ThreeHoursForecastData)
 }
 
 protocol WeatherManagerPopupEventHandler {
@@ -25,7 +25,7 @@ fileprivate enum WeatherDataType: String {
 
 class WeatherManager {
 
-    var delegate: UpdateViewWithData?
+    var delegate: UpdateControllerWithData?
     var handlerDelegate: WeatherManagerPopupEventHandler?
     
     var decoder = WeatherDecoder()
@@ -52,11 +52,11 @@ class WeatherManager {
                 if urlSafe.absoluteString.contains(WeatherDataType.generalType.rawValue) {
                     guard let JSONdata = self.decoder.parseJSON(using: unwrData, forDataType: .generalType) as? EightDayForecastData else { requestGroup.leave()
                         return }
-                    self.delegate?.updateView(withGeneralData: JSONdata)
+                    self.delegate?.updateController(withGeneralData: JSONdata)
                 } else {
                     guard let JSONdata = self.decoder.parseJSON(using: unwrData, forDataType: .detailType) as? ThreeHoursForecastData else { requestGroup.leave()
                         return }
-                    self.delegate?.updateView(withDetailData: JSONdata)
+                    self.delegate?.updateController(withDetailData: JSONdata)
                 }
                 requestGroup.leave()
             }
@@ -114,7 +114,13 @@ protocol ErrorsFromDecoder {
 }
 
 class WeatherDecoder {
-    let decoder = JSONDecoder()
+    
+    let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
+    }()
+    
     var errorDecoderDelegate: ErrorsFromDecoder?
     
     fileprivate func parseJSON(using data: Data, forDataType dataType: WeatherDataType) -> Codable? {

@@ -12,49 +12,65 @@ class MainViewCell: UITableViewCell {
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-
         backgroundColor = UIColor.clear
         self.selectionStyle = .none
-        addSubview(container)
-        
+        setupContainer()
+        setupStack()
+        setupIcon()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupContainer() {
+        contentView.addSubview(container)
         NSLayoutConstraint.activate([container.centerYAnchor.constraint(equalTo: centerYAnchor),
                                      container.centerXAnchor.constraint(equalTo: centerXAnchor),
-                                     container.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 15),
-                                     container.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -15),
-                                     container.topAnchor.constraint(equalTo: topAnchor, constant: 15),
-                                     container.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -15)])
-        
+                                     container.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Customization.containerInsets),
+                                     container.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -(Customization.containerInsets)),
+                                     container.topAnchor.constraint(equalTo: topAnchor, constant: Customization.containerInsets),
+                                     container.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -(Customization.containerInsets))])
+    }
+    
+    private func setupStack() {
         container.addSubview(stack)
-        
+        dateStack.addArrangedSubviews(views: [dayLabel, monthLabel])
+        stack.addArrangedSubviews(views: [dateStack, tempLabel, icon])
         NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
                                      stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
                                      stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 25),
                                      stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -25),
                                      stack.topAnchor.constraint(equalTo: container.topAnchor, constant: 14),
                                      stack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -14)])
-        
-        NSLayoutConstraint.activate([icon.heightAnchor.constraint(equalTo: stack.heightAnchor),
-                                     icon.widthAnchor.constraint(equalTo: icon.heightAnchor)])
-        
     }
     
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
+    private enum Customization {
+        static let containerInsets: CGFloat = 15
+        static let cornerRadius: CGFloat = 20
+        static let shadowOffset = CGSize(width: 10, height: 10)
+        static let shadowRadius: CGFloat = 8
+        static let shadowOpacity: Float = 0.3
+    }
+    
+    private func setupIcon() {
+        NSLayoutConstraint.activate([icon.heightAnchor.constraint(equalTo: stack.heightAnchor),
+        icon.widthAnchor.constraint(equalTo: icon.heightAnchor)])
     }
     
     let container: UIView = {
        let view = UIView()
         view.translatesAutoresizingMaskIntoConstraints = false
-        view.layer.cornerRadius = 20
+        view.layer.cornerRadius = Customization.cornerRadius
         view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOffset = CGSize(width: 10, height: 10)
-        view.layer.shadowRadius = 8
-        view.layer.shadowOpacity = 0.2
+        view.layer.shadowOffset = Customization.shadowOffset
+        view.layer.shadowRadius = Customization.shadowRadius
+        view.layer.shadowOpacity = Customization.shadowOpacity
         return view
     }()
     
-    lazy var stack: UIStackView = {
-       let stack = UIStackView(arrangedSubviews: [dateStack, tempLabel, icon])
+    var stack: UIStackView = {
+       let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.distribution = .equalSpacing
         stack.axis = .horizontal
@@ -62,8 +78,8 @@ class MainViewCell: UITableViewCell {
         return stack
     }()
     
-    lazy var dateStack: UIStackView = {
-       let stack = UIStackView(arrangedSubviews: [dayLabel, monthLabel])
+    var dateStack: UIStackView = {
+       let stack = UIStackView()
         stack.translatesAutoresizingMaskIntoConstraints = false
         stack.distribution = .fillProportionally
         stack.axis = .vertical
@@ -102,19 +118,6 @@ class MainViewCell: UITableViewCell {
     let icon: UIImageView = {
        let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
-        
         return imageView
     }()
-    
-    
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        
-    }
-
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-        // Configure the view for the selected state
-    }
-
 }

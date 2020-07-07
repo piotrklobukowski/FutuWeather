@@ -10,7 +10,7 @@ import Foundation
 
 struct DateConverter {
     
-    private enum Months: Substring {
+    private enum Month: String {
         case january = "01"
         case february = "02"
         case march = "03"
@@ -25,49 +25,46 @@ struct DateConverter {
         case december = "12"
     }
     
-    private static func convertMonth(from month: Months, asShortcut shortcut: Bool) -> String {
-        var string = String()
-        
+    private static func nameMonth(of month: Month) -> String {
         switch month {
         case .january:
-            string = "January"
+            return "January"
         case .february:
-            string = "February"
+            return "February"
         case .march:
-            string = "March"
+            return "March"
         case .april:
-            string = "April"
+            return "April"
         case .may:
-            string = "May"
+            return "May"
         case .june:
-            string = "June"
+            return "June"
         case .july:
-            string = "July"
+             return "July"
         case .august:
-            string = "August"
+            return "August"
         case .september:
-            string = "September"
+            return "September"
         case .october:
-            string = "October"
+            return "October"
         case .november:
-            string = "November"
+            return "November"
         case .december:
-            string = "December"
+            return "December"
         }
-        
-        if shortcut {
-            string = string.prefix(3).uppercased()
-        }
-        
-        return string
+    }
+    
+    private static func makeShortcut(from month: Month) -> String {
+        let fullName = nameMonth(of: month)
+        return fullName.prefix(3).uppercased()
     }
 
     static func convertToFullDate(forTimeZoneWithOffset offset: Int, fromUnixTime unix: Int) -> String {
         let date = ISOTimeConverter.getFullDate(offset: offset, unix: unix)
         let splitedDate = date.split(separator: "-")
-        guard let month = Months.init(rawValue: splitedDate[1]) else { return "nil" }
+        guard let month = Month.init(rawValue: String(splitedDate[1])) else { return "nil" }
         
-        return "\(splitedDate[2]) \(convertMonth(from: month, asShortcut: false)) \(splitedDate[0])"
+        return "\(splitedDate[2]) \(nameMonth(of: month)) \(splitedDate[0])"
     }
     
     static func convertToDay(forTimeZoneWithOffset offset: Int, fromUnixTime unix: Int) -> String {
@@ -79,8 +76,8 @@ struct DateConverter {
     static func convertToMonth(forTimeZoneWithOffset offset: Int, fromUnixTime unix: Int) -> String {
         let date = ISOTimeConverter.getFullDate(offset: offset, unix: unix)
         let splitedDate = date.split(separator: "-")
-        guard let month = Months.init(rawValue: splitedDate[1]) else { return "nil" }
-        return convertMonth(from: month, asShortcut: true)
+        guard let month = Month.init(rawValue: String(splitedDate[1])) else { return "nil" }
+        return makeShortcut(from: month)
     }
     
 }

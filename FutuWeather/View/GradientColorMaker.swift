@@ -18,10 +18,7 @@ struct GradientColorMaker {
         
         let backgroundGradientLayer = CAGradientLayer()
         backgroundGradientLayer.frame = frame
-        
-        let cgColors = colors.map({$0.cgColor})
-        
-        backgroundGradientLayer.colors = cgColors
+        backgroundGradientLayer.colors = colors.map({$0.cgColor})
         
         switch direction {
         case .Up:

@@ -11,7 +11,7 @@ import XCTest
 
 class WeatherManagerTests: XCTestCase {
     
-    class Mock: UpdateViewWithData {
+    class Mock: UpdateControllerWithData {
         
         var updatedGeneralData: EightDayForecastData?
         var updatedDetailData: ThreeHoursForecastData?

@@ -13,7 +13,7 @@ class MainViewController: UIViewController {
     // MARK: - Properties Section
     
     var backgroundView: BackgroundView?
-    var popup: SearchPopup?
+    let spc = SearchPopupController()
     var generalData: EightDayForecastData?
     var detailData: ThreeHoursForecastData?
 
@@ -25,27 +25,32 @@ class MainViewController: UIViewController {
         tblv.separatorStyle = .none
         return tblv
     }()
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        backgroundView = BackgroundView(frame: view.frame, imageName: "background", color: K.backgroundColor)
+        backgroundView = BackgroundView(frame: view.frame, imageName: "background", color: Constants.backgroundColor)
         view.addSubview(backgroundView!)
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(showSearchPopup))
         navigationItem.title = "FutuWeather"
 
         setupTableView()
+        spc.delegate = self
     }
     
     // MARK: - Functionality Section
     
     @objc func showSearchPopup() {
-        popup = SearchPopup()
-        popup?.delegate = self
-        popup?.weatherManager.delegate = self
-        let windowKey = UIApplication.shared.windows.first { $0.isKeyWindow }
-        windowKey?.addSubview(popup!)
+        UIView.animate(withDuration: 0.2, animations: {
+            self.tableView.alpha = 0
+        }) { (complete) in
+            if complete {
+                self.navigationController?.setToolbarHidden(true, animated: true)
+                self.addChild(self.spc)
+                self.view.addSubview(self.spc.view)
+            }
+        }
     }
     
     private func setupTableView() {
@@ -65,38 +70,44 @@ class MainViewController: UIViewController {
 
 // MARK: - Delegates Section
 
-extension MainViewController: OutAnimation {
-    
-    func exitPopup(withData: Bool) {
-        popup?.removeFromSuperview()
-        guard let data = detailData else { return }
-                
+extension MainViewController: UpdateViewWithData {
+    func updateMainView(withData: Bool) {
         if withData {
-            UIView.animate(withDuration: 1, delay: 0, options: .curveLinear, animations: {
-                let fadeTextAnimation = CATransition()
-                fadeTextAnimation.duration = 0.5
-                fadeTextAnimation.type = .fade
-                self.navigationController?.navigationBar.layer.add(fadeTextAnimation, forKey: "fadeText")
-                self.navigationController?.navigationBar.layer.animation(forKey: "fadeText")
-                
-            }) { (complete) in
-                if complete {
-                    self.navigationItem.title = "\(data.city.name) \(CountryRepresentationConverter.getFlag(fromCountry: data.city.country))"
-                    self.tableView.reloadSections(IndexSet(arrayLiteral: 0), with: .automatic)
-                }
+            guard let data = detailData else { return }
+            self.navigationItem.title = "\(data.city.name) \(CountryRepresentationConverter.getFlag(fromCountry: data.city.country))"
+        }
+        self.navigationController?.setNavigationBarHidden(false, animated: true)
+        if withData {
+            reload()
+        } else {
+            showOld()
+        }
+    }
+    
+    private func showOld() {
+        UIView.animate(withDuration: 0.2) {
+            self.tableView.alpha = 1
+        }
+    }
+    
+    private func reload() {
+        UIView.animate(withDuration: 0.2, animations: {
+            self.tableView.reloadData()
+        }) { (complete) in
+            if complete {
+                self.tableView.alpha = 1
             }
-            
         }
     }
 }
-
-extension MainViewController: UpdateViewWithData {
     
-    func updateView(withGeneralData data: EightDayForecastData) {
+extension MainViewController: UpdateControllerWithData {
+    
+    func updateController(withGeneralData data: EightDayForecastData) {
         generalData = data
     }
     
-    func updateView(withDetailData data: ThreeHoursForecastData) {
+    func updateController(withDetailData data: ThreeHoursForecastData) {
         detailData = data
     }
 }
@@ -111,17 +122,17 @@ extension MainViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MainViewCell", for: indexPath) as! MainViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "\(MainViewCell.self)", for: indexPath) as! MainViewCell
         
         guard let data = generalData else { return cell }
         
         let cellSize = CGRect(x: 0, y: 0, width: tableView.frame.width, height: tableView.rowHeight)
-        cell.container.backgroundColor = GradientColorMaker.colorWithGradient(frame: cellSize, colors: K.cellColor, direction: .Down)
+        cell.container.backgroundColor = GradientColorMaker.colorWithGradient(frame: cellSize, colors: Constants.cellColor, direction: .Down)
         
         let day = data.daily[indexPath.row]
         
-        cell.dayLabel.text = DateConverter.convertToDay(forTimeZoneWithOffset: data.timezone_offset, fromUnixTime: day.dt)
-        cell.monthLabel.text = DateConverter.convertToMonth(forTimeZoneWithOffset: data.timezone_offset, fromUnixTime: day.dt)
+        cell.dayLabel.text = DateConverter.convertToDay(forTimeZoneWithOffset: data.timezoneOffset, fromUnixTime: day.dt)
+        cell.monthLabel.text = DateConverter.convertToMonth(forTimeZoneWithOffset: data.timezoneOffset, fromUnixTime: day.dt)
         cell.tempLabel.text = "\(Int((day.temp.day).rounded()))°C"
         cell.icon.image = WeatherConditionConverter.prepareIcon(forWeatherCondition: day.weather[0].id)
         
@@ -138,11 +149,11 @@ extension MainViewController: UITableViewDelegate {
         let day = data.daily[indexPath.row]
         
         let dvc = DetailViewController()
-        dvc.timeOffset = data.timezone_offset
+        dvc.timeOffset = data.timezoneOffset
         dvc.dailyData = day
         dvc.hourlyData = specificData.list.filter({
             let date = ISOTimeConverter.getFullDate(offset: specificData.city.timezone, unix: $0.dt)
-            return date == ISOTimeConverter.getFullDate(offset: data.timezone_offset, unix: day.dt)
+            return date == ISOTimeConverter.getFullDate(offset: data.timezoneOffset, unix: day.dt)
         })
         
         self.navigationController?.pushViewController(dvc, animated: true)
