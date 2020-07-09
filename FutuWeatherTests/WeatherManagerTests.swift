@@ -16,11 +16,11 @@ class WeatherManagerTests: XCTestCase {
         var updatedGeneralData: EightDayForecastData?
         var updatedDetailData: ThreeHoursForecastData?
         
-        func updateView(withGeneralData data: EightDayForecastData) {
+        func updateController(withGeneralData data: EightDayForecastData) {
             updatedGeneralData = data
         }
         
-        func updateView(withDetailData data: ThreeHoursForecastData) {
+        func updateController(withDetailData data: ThreeHoursForecastData) {
             updatedDetailData = data
         }
     }
