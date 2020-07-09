@@ -7,7 +7,12 @@ FutuWeather is weather forecast application created with Swift for iOS 13.5. By 
 
 ## Technologies
 
-Swift 5
+* Swift 5
+* UIKit
+* Core Animation
+* Core Location
+* XCTest
+* Grand Central Dispatch
 
 ## Launch
 
